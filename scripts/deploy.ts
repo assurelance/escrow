@@ -1,30 +1,20 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
-import { ethers } from "hardhat";
+import { task } from "hardhat/config";
 
-async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+task("deploy", "Deploys the Escrow proxy and the implementation contract")
+    .setAction(async function (taskArguments, hre) {
+        const Escrow = await hre.ethers.getContractFactory("Escrow");
+        const escrow = await hre.upgrades.deployProxy(Escrow);
 
-  // We get the contract to deploy
-  const Escrow = await ethers.getContractFactory("Escrow");
-  const escrow = await Escrow.deploy();
+        await escrow.deployed();
 
-  await escrow.deployed();
+        console.log("Escrow deployed to:", escrow.address);
+    })
 
-  console.log("Escrow deployed to:", escrow.address);
-}
+task("upgrade", "Upgrade the implementation contract")
+    .addPositionalParam("address", "The implementation contract address to be upgraded")
+    .setAction(async function (taskArguments, hre) {
+        const Escrow = await hre.ethers.getContractFactory("Escrow");
+        const escrow = await hre.upgrades.upgradeProxy(taskArguments.address, Escrow);
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+        console.log("Escrow upgraded to:", escrow.address);
+    })
