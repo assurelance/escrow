@@ -7,10 +7,11 @@ import "hardhat/console.sol";
 
 contract Escrow is Initializable {
     struct Transaction {
-        address payable sender;
-        address payable receiver;
+        address sender;
+        address receiver;
         uint256 amount;
         IERC20 token;
+        uint256 deadline;
     }
 
     event TransactionCreated(
@@ -18,17 +19,33 @@ contract Escrow is Initializable {
         address indexed sender,
         address indexed receiver,
         IERC20 token,
-        uint256 amount
+        uint256 amount,
+        uint256 deadline
     );
 
+    event TransactionResolved(uint256 indexed transactionId);
+
     bytes32[] public _transactionHashes;
+
+    modifier onlyValidTransaction(
+        uint256 transactionId,
+        Transaction memory transaction
+    ) {
+        require(
+            _transactionHashes[transactionId - 1] ==
+                hashTransaction(transaction),
+            "Transaction does not match stored hash."
+        );
+        _;
+    }
 
     function initialize() public initializer {}
 
     function createTransaction(
         uint256 amount,
         IERC20 token,
-        address payable receiver
+        address payable receiver,
+        uint256 timeout
     ) external returns (uint256 transactionId) {
         require(
             token.transferFrom(msg.sender, address(this), amount),
@@ -36,20 +53,49 @@ contract Escrow is Initializable {
         );
 
         Transaction memory _transaction = Transaction({
-            sender: payable(msg.sender),
+            sender: msg.sender,
             receiver: receiver,
             amount: amount,
-            token: token
+            token: token,
+            deadline: block.timestamp + timeout
         });
 
         _transactionHashes.push(hashTransaction(_transaction));
         transactionId = _transactionHashes.length;
 
-        emit TransactionCreated(transactionId, msg.sender, receiver, token, amount);
+        emit TransactionCreated(
+            transactionId,
+            msg.sender,
+            receiver,
+            token,
+            amount,
+            _transaction.deadline
+        );
+    }
+
+    function executeTransaction(
+        uint256 transactionId,
+        Transaction memory transaction
+    ) external onlyValidTransaction(transactionId, transaction) {
+        require(
+            block.timestamp >= transaction.deadline,
+            "Transaction deadline not passed."
+        );
+
+        uint256 amount = transaction.amount;
+        transaction.amount = 0;
+        _transactionHashes[transactionId - 1] = hashTransaction(transaction);
+
+        require(
+            transaction.token.transfer(transaction.receiver, amount),
+            "Failed to transfer fund."
+        );
+
+        emit TransactionResolved(transactionId);
     }
 
     function hashTransaction(Transaction memory transaction)
-        internal
+        public
         pure
         returns (bytes32)
     {
@@ -59,7 +105,8 @@ contract Escrow is Initializable {
                     transaction.sender,
                     transaction.receiver,
                     transaction.amount,
-                    transaction.token
+                    transaction.token,
+                    transaction.deadline
                 )
             );
     }
