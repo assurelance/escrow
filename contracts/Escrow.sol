@@ -6,12 +6,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "hardhat/console.sol";
 
 contract Escrow is Initializable {
+    enum Status {
+        NoDispute,
+        Resolved
+    }
+
     struct Transaction {
         address sender;
         address receiver;
         uint256 amount;
         IERC20 token;
         uint256 deadline;
+        Status status;
     }
 
     event TransactionCreated(
@@ -20,7 +26,8 @@ contract Escrow is Initializable {
         address indexed receiver,
         IERC20 token,
         uint256 amount,
-        uint256 deadline
+        uint256 deadline,
+        Status status
     );
 
     event TransactionResolved(uint256 indexed transactionId);
@@ -57,7 +64,8 @@ contract Escrow is Initializable {
             receiver: receiver,
             amount: amount,
             token: token,
-            deadline: block.timestamp + timeout
+            deadline: block.timestamp + timeout,
+            status: Status.NoDispute
         });
 
         _transactionHashes.push(hashTransaction(_transaction));
@@ -69,7 +77,8 @@ contract Escrow is Initializable {
             receiver,
             token,
             amount,
-            _transaction.deadline
+            _transaction.deadline,
+            _transaction.status
         );
     }
 
@@ -81,9 +90,14 @@ contract Escrow is Initializable {
             block.timestamp >= transaction.deadline,
             "Transaction deadline not passed."
         );
+        require(
+            transaction.status == Status.NoDispute,
+            "Status must not be disputed."
+        );
 
         uint256 amount = transaction.amount;
         transaction.amount = 0;
+        transaction.status = Status.Resolved;
         _transactionHashes[transactionId - 1] = hashTransaction(transaction);
 
         require(
@@ -106,7 +120,8 @@ contract Escrow is Initializable {
                     transaction.receiver,
                     transaction.amount,
                     transaction.token,
-                    transaction.deadline
+                    transaction.deadline,
+                    transaction.status
                 )
             );
     }

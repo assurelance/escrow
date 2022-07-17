@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Escrow, MockERC20 } from "../typechain";
+import { TransactionStatus } from "../src/enum";
 
 describe("Escrow", async () => {
   let contract: Escrow;
@@ -26,7 +27,7 @@ describe("Escrow", async () => {
   });
 
   describe("createTransaction", () => {
-    it("Should emit events", async () => {
+    it("should emit events", async () => {
       const timeout = 7 * 24 * 60 * 60;
       const deadline = currentTimestamp + timeout + 1;
 
@@ -44,12 +45,21 @@ describe("Escrow", async () => {
         amount: 10,
         token: erc20.address,
         deadline,
+        status: TransactionStatus.NoDispute,
       });
       expect(await contract._transactionHashes(0)).to.equal(expectedHash);
 
       await expect(tx)
         .to.emit(contract, "TransactionCreated")
-        .withArgs(1, owner.address, acc1.address, erc20.address, 10, deadline);
+        .withArgs(
+          1,
+          owner.address,
+          acc1.address,
+          erc20.address,
+          10,
+          deadline,
+          TransactionStatus.NoDispute
+        );
     });
   });
 
@@ -66,12 +76,13 @@ describe("Escrow", async () => {
         amount: 10,
         token: erc20.address,
         deadline,
+        status: TransactionStatus.NoDispute,
       };
       await createTransaction(owner, acc1, 10, erc20.address, timeout);
     });
 
     context("deadline has passed", () => {
-      it("Should emit events", async () => {
+      it("should emit events", async () => {
         // Simulate deadline has passed
         await ethers.provider.send("evm_mine", [deadline + 1]);
 
@@ -86,7 +97,7 @@ describe("Escrow", async () => {
     });
 
     context("deadline has not passed", () => {
-      it("Should revert transaction", async () => {
+      it("should revert transaction", async () => {
         // Simulate block timestamp
         await ethers.provider.send("evm_mine", [currentTimestamp + 60 * 60]);
 
