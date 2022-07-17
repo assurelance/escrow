@@ -1,0 +1,67 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x14ffef026E4d8b5996bc95908839364A8252dea2",
+    "txHash": "0x2d8096dc8cd6b3b0a4a18c6cda462e5397ec11e9ebb7aa72c55013c5770b9f66"
+  },
+  "proxies": [
+    {
+      "address": "0x0D46B93D70F17604119D142b4573A5E3627568eb",
+      "txHash": "0xdf5e484ad198513327f4bfc41a4560fa7911110635b74134f676612887140300",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "c37ca264a9736d5c6014d4119bfe59cc1aad0bdde4c102d1e7b33ec9b273d77d": {
+      "address": "0xf1edae27ba73805E5b25a216D496F368eF1bDeF2",
+      "txHash": "0x9d7d1c88096290eda6da9f0cd7891ca7ed2803b047ef944c3a360fabab32de5b",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "_transactionHashes",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "Escrow",
+            "src": "contracts/Escrow.sol:35"
+          }
+        ],
+        "types": {
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

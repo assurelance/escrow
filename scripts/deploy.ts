@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 
-task("deploy", "Deploys the Escrow proxy and the implementation contract")
+task("deploy", "Deploys the proxy and the implementation contract")
     .setAction(async function (taskArguments, hre) {
         const Escrow = await hre.ethers.getContractFactory("Escrow");
         const escrow = await hre.upgrades.deployProxy(Escrow);
@@ -18,3 +18,10 @@ task("upgrade", "Upgrade the implementation contract")
 
         console.log("Escrow upgraded to:", escrow.address);
     })
+
+task("verify", "Verify the implementation contract")
+  .setAction(async function (taskArguments, hre) {
+    await hre.run("verify:verify", {
+      address: taskArguments.address,
+    });
+  });
